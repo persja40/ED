@@ -7,3 +7,6 @@ samples = data.values
 
 import ed_stat
 ed_stat.race_percentage(samples)
+
+import outliers
+print(outliers.gower_distance(samples[0], samples[1]))
