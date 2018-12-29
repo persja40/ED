@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
@@ -33,9 +34,8 @@ def gower_distance(e1, e2):
 
     # exam scores
     for i in [5, 6, 7]:
-
-    result += abs(edu_dict[encoder_dict['parents_edu'].inverse_transform([int(e1[2])])[0]] -
-                  edu_dict[encoder_dict['parents_edu'].inverse_transform([int(e2[2])])[0]])
+        result += abs(edu_dict[encoder_dict['parents_edu'].inverse_transform([int(e1[2])])[0]] -
+                      edu_dict[encoder_dict['parents_edu'].inverse_transform([int(e2[2])])[0]])
     return result
 
 
@@ -53,3 +53,12 @@ nbrs = NearestNeighbors(n_neighbors=5, algorithm='brute',
 
 knn = nbrs.kneighbors([samples[0]])
 print(knn[0])
+
+
+# CLUSTER
+kmeans = KMeans(n_clusters=10, random_state=0).fit(samples)
+#print cluster nr
+for i in samples:
+    print( kmeans.predict([i]) )
+
+# CLASS
