@@ -56,9 +56,18 @@ print(knn[0])
 
 
 # CLUSTER
-kmeans = KMeans(n_clusters=10, random_state=0).fit(samples)
-#print cluster nr
+cluster_nr = 10
+kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(samples)
+clusters = [[] for i in range(cluster_nr)]
+# print cluster nr
 for i in samples:
-    print( kmeans.predict([i]) )
-
+    decode = []
+    decode.append(encoder_dict['gender'].inverse_transform([i[0]])[0])
+    decode.append(encoder_dict['race'].inverse_transform([i[1]])[0])
+    decode.append(encoder_dict['parents_edu'].inverse_transform([i[2]])[0])
+    decode.append(encoder_dict['lunch'].inverse_transform([i[3]])[0])
+    decode.append(encoder_dict['prep_test'].inverse_transform([i[4]])[0])
+    decode.extend(i[5:8])
+    clusters[kmeans.predict([i])[0]].append(decode)
+print(clusters)
 # CLASS
