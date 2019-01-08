@@ -2,6 +2,7 @@
 from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,3 +72,13 @@ for i in samples:
     clusters[kmeans.predict([i])[0]].append(decode)
 print(clusters)
 # CLASS
+X = []
+Y = []
+for i, c in enumerate(clusters):
+    X.extend(c)
+    Y.extend(len(c)*[i])
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
+print(X_train)
+print(y_train)
+print(X_test)
+print(y_test)
