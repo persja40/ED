@@ -3,6 +3,8 @@ from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn import tree
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +12,7 @@ from sklearn.neighbors import NearestNeighbors
 
 data = pd.read_csv('StudentsPerformance.csv')
 samples = data.values
-
+classes = len(samples)*[0]
 
 # import ed_stat
 # ed_stat.race_percentage(samples)
@@ -61,24 +63,26 @@ cluster_nr = 10
 kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(samples)
 clusters = [[] for i in range(cluster_nr)]
 # print cluster nr
-for i in samples:
-    decode = []
-    decode.append(encoder_dict['gender'].inverse_transform([i[0]])[0])
-    decode.append(encoder_dict['race'].inverse_transform([i[1]])[0])
-    decode.append(encoder_dict['parents_edu'].inverse_transform([i[2]])[0])
-    decode.append(encoder_dict['lunch'].inverse_transform([i[3]])[0])
-    decode.append(encoder_dict['prep_test'].inverse_transform([i[4]])[0])
+for j, i in enumerate(samples):
+    decode = [
+        encoder_dict['gender'].inverse_transform([i[0]])[0],
+        encoder_dict['race'].inverse_transform([i[1]])[0],
+        encoder_dict['parents_edu'].inverse_transform([i[2]])[0],
+        encoder_dict['lunch'].inverse_transform([i[3]])[0],
+        encoder_dict['prep_test'].inverse_transform([i[4]])[0]
+    ]
     decode.extend(i[5:8])
-    clusters[kmeans.predict([i])[0]].append(decode)
+    cls = kmeans.predict([i])[0]
+    clusters[cls].append(decode)
+    classes[j] = cls
 print(clusters)
+
 # CLASS
-X = []
-Y = []
-for i, c in enumerate(clusters):
-    X.extend(c)
-    Y.extend(len(c)*[i])
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
-print(X_train)
-print(y_train)
-print(X_test)
-print(y_test)
+
+X_train, X_test, y_train, y_test = train_test_split(samples, classes, test_size=0.33)
+
+clf = tree.DecisionTreeClassifier()
+clf = clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+# print classification report
+print(classification_report(y_test, y_pred))
