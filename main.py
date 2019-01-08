@@ -1,5 +1,7 @@
 #!/usr/bin/python3
+from statistics import mean
 from sklearn.cluster import KMeans
+from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -8,11 +10,9 @@ from sklearn import tree
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 data = pd.read_csv('StudentsPerformance.csv')
 samples = data.values
-classes = len(samples)*[0]
 
 # import ed_stat
 # ed_stat.race_percentage(samples)
@@ -54,16 +54,36 @@ print(encoder_dict['parents_edu'].inverse_transform([1]))
 nbrs = NearestNeighbors(n_neighbors=5, algorithm='brute',
                         metric=gower_distance).fit(samples)
 
-knn = nbrs.kneighbors([samples[0]])
-print(knn[0])
+filtered_samples = []
 
+# 1% of samples take as outliers
+p = len(samples)*0.01
+
+sample_dict = {}
+samples_range = [i for i in range(0, len(samples))]
+old_value = -1
+
+for i, s in enumerate(samples):
+    distances, indices = nbrs.kneighbors([s])
+    sample_dict[i] = mean(distances[0])
+
+for key in sorted(sample_dict, key=sample_dict.get, reverse=True):
+    value = sample_dict[key]
+    if p <= 0 and old_value != value:
+        break
+    p -= 1
+    samples_range.remove(key)
+
+for i in samples_range:
+    filtered_samples.append(samples[i])
 
 # CLUSTER
 cluster_nr = 10
-kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(samples)
+classes = len(filtered_samples)*[0]
+kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(filtered_samples)
 clusters = [[] for i in range(cluster_nr)]
 # print cluster nr
-for j, i in enumerate(samples):
+for j, i in enumerate(filtered_samples):
     decode = [
         encoder_dict['gender'].inverse_transform([i[0]])[0],
         encoder_dict['race'].inverse_transform([i[1]])[0],
@@ -79,7 +99,7 @@ print(clusters)
 
 # CLASS
 
-X_train, X_test, y_train, y_test = train_test_split(samples, classes, test_size=0.33)
+X_train, X_test, y_train, y_test = train_test_split(filtered_samples, classes, test_size=0.33, random_state=42)
 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(X_train, y_train)
