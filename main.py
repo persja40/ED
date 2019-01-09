@@ -29,6 +29,8 @@ encoder_dict = {
     'prep_test': LabelEncoder().fit(samples[:, 4])
 }
 
+exams_list = ["math score", "reading score", "writing score"]
+
 
 def gower_distance(e1, e2):
     result = 0
@@ -50,15 +52,13 @@ samples[:, 2] = encoder_dict['parents_edu'].transform(samples[:, 2])
 samples[:, 3] = encoder_dict['lunch'].transform(samples[:, 3])
 samples[:, 4] = encoder_dict['prep_test'].transform(samples[:, 4])
 
-
 print(encoder_dict['parents_edu'].inverse_transform([1]))
 
 nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='brute',
                         metric=gower_distance).fit(samples)
 
-
 # 1% of samples take as outliers
-p = len(samples)*0.01
+p = len(samples) * 0.01
 
 sample_dict = {}
 samples_range = [i for i in range(len(samples))]
@@ -80,7 +80,7 @@ filtered_samples = [samples[i] for i in samples_range]
 
 # CLUSTER
 cluster_nr = 10
-classes = len(filtered_samples)*[0]
+classes = len(filtered_samples) * [0]
 kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(filtered_samples)
 clusters = [[] for i in range(cluster_nr)]
 # print cluster nr
@@ -102,8 +102,26 @@ print(clusters)
 
 X_train, X_test, y_train, y_test = train_test_split(filtered_samples, classes, test_size=0.33, random_state=42)
 
-knc = KNeighborsClassifier(n_neighbors=n_neighbors-1).fit(X_train, y_train)
+knc = KNeighborsClassifier(n_neighbors=n_neighbors - 1).fit(X_train, y_train)
 y_pred = knc.predict(X_test)
 # print classification report
-target_names = ['class '+str(i) for i in range(cluster_nr)]
+target_names = ['class ' + str(i) for i in range(cluster_nr)]
 print(classification_report(y_test, y_pred, target_names=target_names))
+
+for i in range(cluster_nr):
+    with open('class ' + str(i) + ".data", 'w') as f:
+        for l in clusters[i]:
+            f.write(str(l) + '\n')
+
+        for key in encoder_dict.keys():
+            f.write(key + '\n\t')
+            for k in encoder_dict[key].classes_:
+                f.write(k + "=" + str(sum(c.count(k) for c in clusters[i])) + "\t")
+            f.write('\n')
+
+        for j in range(len(exams_list)):
+            f.write(exams_list[j] + '\n\t')
+            f.write("min={}, max={}, avg={}".format(min(c[j + 5] for c in clusters[i]),
+                                                    max(c[j + 5] for c in clusters[i]),
+                                                    mean(c[j + 5] for c in clusters[i])))
+            f.write('\n')
