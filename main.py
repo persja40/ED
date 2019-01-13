@@ -62,6 +62,7 @@ p = len(samples) * 0.01
 
 sample_dict = {}
 samples_range = [i for i in range(len(samples))]
+outliers = []
 old_value = -1
 
 for i, s in enumerate(samples):
@@ -74,9 +75,24 @@ for key in sorted(sample_dict, key=sample_dict.get, reverse=True):
         break
     old_value = value
     p -= 1
+    outliers.append([key, value])
     samples_range.remove(key)
 
 filtered_samples = [samples[i] for i in samples_range]
+
+with open('stats/outliers.dat', 'w') as f:
+    for o in outliers:
+        i = o[0]
+        decode = [
+            encoder_dict['gender'].inverse_transform([samples[i][0]])[0],
+            encoder_dict['race'].inverse_transform([samples[i][1]])[0],
+            encoder_dict['parents_edu'].inverse_transform([samples[i][2]])[0],
+            encoder_dict['lunch'].inverse_transform([samples[i][3]])[0],
+            encoder_dict['prep_test'].inverse_transform([samples[i][4]])[0]
+        ]
+        decode.extend(samples[i][5:8])
+
+        f.write(str(i) + ' \tdistance={:.2f}'.format(o[1]) + ', ' + str(decode) + '\n')
 
 # CLUSTER
 cluster_nr = 10
@@ -108,20 +124,42 @@ y_pred = knc.predict(X_test)
 target_names = ['class ' + str(i) for i in range(cluster_nr)]
 print(classification_report(y_test, y_pred, target_names=target_names))
 
+class_stats = []
+
 for i in range(cluster_nr):
-    with open('class ' + str(i) + ".data", 'w') as f:
-        for l in clusters[i]:
-            f.write(str(l) + '\n')
+    sts = []
+    with open('stats/class ' + str(i) + '.dat', 'w') as f:
+        for length in clusters[i]:
+            f.write(str(length) + '\n')
 
         for key in encoder_dict.keys():
             f.write(key + '\n\t')
             for k in encoder_dict[key].classes_:
-                f.write(k + "=" + str(sum(c.count(k) for c in clusters[i])) + "\t")
+                v = sum(c.count(k) for c in clusters[i])
+                sts.append([k, v])
+                f.write(k + "=" + str(v) + "\t")
             f.write('\n')
 
         for j in range(len(exams_list)):
+            v_min = min(c[j + 5] for c in clusters[i])
+            v_max = max(c[j + 5] for c in clusters[i])
+            v_avg = mean(c[j + 5] for c in clusters[i])
+            sts.append([exams_list[j], v_min, v_max, v_avg])
             f.write(exams_list[j] + '\n\t')
-            f.write("min={}, max={}, avg={}".format(min(c[j + 5] for c in clusters[i]),
-                                                    max(c[j + 5] for c in clusters[i]),
-                                                    mean(c[j + 5] for c in clusters[i])))
+            f.write("min={}, max={}, avg={}".format(v_min, v_max, v_avg))
             f.write('\n')
+    class_stats.append(sts)
+
+print(len(class_stats[0]))
+
+length = len(class_stats[0]) - 3
+
+with open('stats/class_stats.dat', 'w') as f:
+    for i in range(cluster_nr):
+        f.write('class ' + str(i) + ' ')
+        for j in range(len(class_stats[i]) - 3):
+            f.write(str(class_stats[i][j][0]) + '=' + str(class_stats[i][j][1]) + '  \t')
+        for j in range(3):
+            f.write(str(class_stats[i][j + length][0]) + ':' + 'min={}, max={}, avg={}'.format(
+                class_stats[i][j + length][1], class_stats[i][j + length][2], class_stats[i][j + length][3]) + '\t')
+        f.write('\n')
