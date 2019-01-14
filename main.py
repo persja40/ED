@@ -150,16 +150,16 @@ for i in range(cluster_nr):
             f.write('\n')
     class_stats.append(sts)
 
-print(len(class_stats[0]))
-
 length = len(class_stats[0]) - 3
 
 with open('stats/class_stats.dat', 'w') as f:
     for i in range(cluster_nr):
         f.write('class ' + str(i) + ' ')
         for j in range(len(class_stats[i]) - 3):
-            f.write(str(class_stats[i][j][0]) + '=' + str(class_stats[i][j][1]) + '  \t')
+            f.write('{}={:3d}'.format(class_stats[i][j][0], class_stats[i][j][1]) + ', ')
         for j in range(3):
-            f.write(str(class_stats[i][j + length][0]) + ':' + 'min={}, max={}, avg={}'.format(
-                class_stats[i][j + length][1], class_stats[i][j + length][2], class_stats[i][j + length][3]) + '\t')
+            f.write('{}: min={:3d}, max={:3d}, avg={:5.2f}'.format(class_stats[i][j + length][0],
+                                                                   class_stats[i][j + length][1],
+                                                                   class_stats[i][j + length][2],
+                                                                   class_stats[i][j + length][3]) + ', ')
         f.write('\n')
