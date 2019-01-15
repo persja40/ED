@@ -7,6 +7,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +20,10 @@ samples = data.values
 
 n_neighbors = 5
 
+
 # OUTLIERS
+
+
 edu_dict = {"bachelor's degree": 0.8, 'some college': 0.6, "master's degree": 1,
             "associate's degree": 0.8, 'high school': 0.5, 'some high school': 0}
 
@@ -78,7 +82,7 @@ for key in sorted(sample_dict, key=sample_dict.get, reverse=True):
     outliers.append([key, value])
     samples_range.remove(key)
 
-filtered_samples = [samples[i] for i in samples_range]
+filtered_samples = np.array([samples[i] for i in samples_range])
 
 with open('stats/outliers.dat', 'w') as f:
     for o in outliers:
@@ -94,7 +98,10 @@ with open('stats/outliers.dat', 'w') as f:
 
         f.write(str(i) + ' \tdistance={:.2f}'.format(o[1]) + ', ' + str(decode) + '\n')
 
+
 # CLUSTER
+
+
 cluster_nr = 10
 classes = len(filtered_samples) * [0]
 kmeans = KMeans(n_clusters=cluster_nr, random_state=0).fit(filtered_samples)
@@ -114,15 +121,136 @@ for j, i in enumerate(filtered_samples):
     classes[j] = cls
 print(clusters)
 
+
 # CLASS
 
-X_train, X_test, y_train, y_test = train_test_split(filtered_samples, classes, test_size=0.33, random_state=42)
 
-knc = KNeighborsClassifier(n_neighbors=n_neighbors - 1).fit(X_train, y_train)
-y_pred = knc.predict(X_test)
-# print classification report
-target_names = ['class ' + str(i) for i in range(cluster_nr)]
-print(classification_report(y_test, y_pred, target_names=target_names))
+X = filtered_samples[:, 5:8]
+
+with open('stats/attribute_classifiers.dat', 'w') as f:
+
+    #       gender
+
+    f.write("Gender\n\n")
+
+    classes = filtered_samples[:, 0].tolist()
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       race
+
+    f.write("\nRace\n\n")
+
+    classes = filtered_samples[:, 1].tolist()
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       parental level of education
+
+    f.write("\nparental level of education\n\n")
+
+    classes = filtered_samples[:, 2].tolist()
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       lunch
+
+    f.write("\nlunch\n\n")
+
+    classes = filtered_samples[:, 3].tolist()
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       test preparation course
+
+    f.write("\ntest preparation course\n\n")
+
+    classes = filtered_samples[:, 4].tolist()
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+# Exam scores
+
+X = filtered_samples[:, 0:5]
+
+with open('stats/scores_classifiers.dat', 'w') as f:
+
+    #       math score
+
+    f.write("math score\n\n")
+
+    classes = list(map(lambda x: np.math.floor(x / 10) * 10, filtered_samples[:, 5].tolist()))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=5).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       reading score
+
+    f.write("\nreading score\n\n")
+
+    classes = list(map(lambda x: np.math.floor(x / 10) * 10, filtered_samples[:, 6].tolist()))
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=5).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+    #       writing score
+
+    f.write("\nwriting score\n\n")
+
+    classes = list(map(lambda x: np.math.floor(x / 10) * 10, filtered_samples[:, 7].tolist()))
+    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42)
+
+    knc = KNeighborsClassifier(n_neighbors=5).fit(X_train, y_train)
+    y_pred = knc.predict(X_test)
+
+    # print classification report
+    f.write(classification_report(y_test, y_pred))
+    f.write('\n' + str(confusion_matrix(y_test, y_pred)) + '\n')
+
+
+# STATS
+
 
 class_stats = []
 
